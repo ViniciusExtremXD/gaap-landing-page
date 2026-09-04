@@ -12,9 +12,12 @@ html { scroll-padding-top: 132px; }
 .care-step:nth-of-type(3) { --reveal-delay: 200ms; }
 
 @keyframes ribbon-travels { to { transform: translateX(-50%); } }
-:root[data-motion=full] .chapter-ribbon > div { animation: ribbon-travels 36s linear infinite; padding-inline: 0; gap: 0; }
-.chapter-ribbon > div span { padding-inline: 23px; }
-.chapter-ribbon:hover > div { animation-play-state: paused; }
+@keyframes ribbon-spark-turns { to { rotate: 180deg; } }
+.chapter-ribbon > .ribbon-track { gap: 0; padding: 18px 0; }
+.ribbon-group { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-around; min-width: 100vw; gap: clamp(26px, 3.2vw, 62px); padding-inline: clamp(13px, 1.6vw, 31px); }
+.ribbon-group > span { flex-shrink: 0; white-space: nowrap; }
+:root[data-motion=full] .ribbon-track { animation: ribbon-travels 24s linear infinite; }
+:root[data-motion=full] .ribbon-spark { animation: ribbon-spark-turns 12s linear infinite; }
 .hero-scribble path, .handwritten-note path, .support-embrace path { stroke-dasharray: 700; stroke-dashoffset: 0; }
 @keyframes ink-arrives { from { stroke-dashoffset: 700; } to { stroke-dashoffset: 0; } }
 :root[data-motion=full] .hero-scribble path { animation: ink-arrives 2s var(--ease-out) 450ms both; }
@@ -101,7 +104,7 @@ html { scroll-padding-top: 132px; }
 }
 @media (max-width: 700px) {
   html { scroll-padding-top: 110px; }
-  .chapter-ribbon > div span { padding-inline: 15px; }
+  .chapter-ribbon > .ribbon-track { padding-block: 13px; }
   :root.motion-ready[data-motion=full] [data-reveal]:not(.is-visible):not(:focus-within) { translate: 0 23px; }
   .care-step { --reveal-delay: 0ms !important; }
   .cinema-section { padding-bottom: 52px; }

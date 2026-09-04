@@ -19,4 +19,8 @@ import Media from './Media.astro';
     <svg class="hero-scribble" viewBox="0 0 160 100" fill="none" aria-hidden="true"><path d="M6 57C47 3 73 106 107 58s-22-75-27-19c-4 49 38 60 69 27m-18-10 19 10-2 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
   </div>
 </section>
-<div class="chapter-ribbon" aria-hidden="true"><div><span>Resgatar</span><span>✳</span><span>Acolher</span><span>✳</span><span>Cuidar</span><span>✳</span><span>Recomeçar</span><span>✳</span><span>Resgatar</span><span>✳</span><span>Acolher</span><span>✳</span><span>Cuidar</span><span>✳</span><span>Recomeçar</span><span>✳</span></div></div>
+<div class="chapter-ribbon" aria-hidden="true">
+  <div class="ribbon-track">
+    {[0, 1].map(() => <div class="ribbon-group">{['Resgatar', 'Acolher', 'Cuidar', 'Recomeçar'].map(word => <><span>{word}</span><span class="ribbon-spark">✳</span></>)}</div>)}
+  </div>
+</div>
