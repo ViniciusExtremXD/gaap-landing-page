@@ -1,4 +1,5 @@
 import { initializeScrollMotion } from './scroll-motion';
+import { initializeCarouselAutoplay } from './carousel-autoplay';
 
 type MotionPreference = 'full' | 'reduced';
 
@@ -21,6 +22,7 @@ function twoDigits(value: number) {
 
 export function initializeSite(doc: Document, win: Window): () => void {
   const cleanups: Array<() => void> = [];
+  const motionRefreshers: Array<() => void> = [];
   const observers: IntersectionObserver[] = [];
   const root = doc.documentElement;
   const IntersectionObserverConstructor = (
@@ -79,7 +81,18 @@ export function initializeSite(doc: Document, win: Window): () => void {
     }
   };
 
-  const storedMotion = readStoredMotion();
+  // This explicit demonstration link overrides saved/system preferences for this site only.
+  const requestedMotion = new URL(win.location.href).searchParams.get('motion');
+  const demoMotion = requestedMotion === 'full' ? 'full' : null;
+  if (demoMotion) {
+    try { win.localStorage.setItem(MOTION_STORAGE_KEY, demoMotion); } catch { /* session still works */ }
+    try {
+      const url = new URL(win.location.href);
+      url.searchParams.delete('motion');
+      win.history.replaceState(win.history.state, '', url.href);
+    } catch { /* query is optional to remove */ }
+  }
+  const storedMotion = demoMotion ?? readStoredMotion();
   const systemMotion = win.matchMedia?.('(prefers-reduced-motion: reduce)');
   let hasManualMotion = storedMotion !== null;
   let motion: MotionPreference = storedMotion ?? (systemMotion?.matches ? 'reduced' : 'full');
@@ -92,6 +105,11 @@ export function initializeSite(doc: Document, win: Window): () => void {
       toggle.setAttribute('aria-pressed', String(reduced));
       const label = toggle.querySelector<HTMLElement>('[data-motion-label]');
       if (label) label.textContent = 'Reduzir movimentos';
+      const quickLabel = toggle.querySelector<HTMLElement>('[data-motion-quick-label]');
+      if (quickLabel) {
+        toggle.removeAttribute('aria-pressed');
+        quickLabel.textContent = reduced ? 'Ativar animações' : 'Pausar animações';
+      }
     });
 
     if (reduced) {
@@ -106,6 +124,7 @@ export function initializeSite(doc: Document, win: Window): () => void {
       });
     }
     scrollMotion?.refreshMotion();
+    motionRefreshers.forEach(refresh => refresh());
   };
 
   renderMotion();
@@ -493,6 +512,10 @@ export function initializeSite(doc: Document, win: Window): () => void {
       const index = Number(dot.dataset.cinemaGo);
       if (Number.isInteger(index) && index >= 0 && index < items.length) goTo(index);
     })));
+    const autoplay = initializeCarouselAutoplay(cinema, doc, win, () => motion === 'reduced',
+      () => goTo((activeIndex + 1) % items.length));
+    motionRefreshers.push(autoplay.refreshMotion);
+    cleanups.push(autoplay.cleanup);
     cleanups.push(() => {
       if (drag?.moved) restoreDragStyles();
       drag = null;

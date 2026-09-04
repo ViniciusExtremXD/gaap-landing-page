@@ -126,6 +126,27 @@ function createPage(
   return { dom, window, document: window.document, cleanup, intersect, setReducedMotion, flushFrames, frames };
 }
 
+test('explicit full-motion link overrides system and saved reduction and still allows pausing', () => {
+  const page = createPage('<button data-motion-toggle data-motion-quick><span data-motion-quick-label></span></button>', {
+    reduceMotion: true,
+    beforeInitialize(window) {
+      window.localStorage.setItem('gaap-motion', 'reduced');
+      window.history.replaceState(null, '', '?motion=full');
+    },
+  });
+  assert.equal(page.document.documentElement.dataset.motion, 'full');
+  assert.equal(page.window.localStorage.getItem('gaap-motion'), 'full');
+  assert.equal(page.window.location.search, '');
+  assert.equal(page.document.querySelector('[data-motion-quick-label]')!.textContent, 'Pausar animações');
+  page.setReducedMotion(true);
+  assert.equal(page.document.documentElement.dataset.motion, 'full');
+  page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click();
+  assert.equal(page.document.documentElement.dataset.motion, 'reduced');
+  assert.equal(page.window.localStorage.getItem('gaap-motion'), 'reduced');
+  assert.equal(page.document.querySelector('[data-motion-quick-label]')!.textContent, 'Ativar animações');
+  page.cleanup();
+});
+
 test('page scroll updates progress and section navigation in one frame without a perpetual loop', () => {
   let scrollY = 0;
   const page = createPage(`
