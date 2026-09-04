@@ -1,0 +1,7 @@
+---
+import { links } from '../data/gaap';
+import Arrow from './Arrow.astro';
+import Flower from './Flower.astro';
+import Media from './Media.astro';
+---
+<section class="support-section" id="apoiar" aria-labelledby="support-title"><div class="container support-grid"><div class="support-copy"><p class="eyebrow"><span class="chapter-number">05 /</span> um pequeno gesto, de verdade</p><h2 id="support-title">O próximo<br />recomeço pode<br />ter um pouco<br /><em>de você.</em></h2><p>O apoio mensal ajuda a manter o trabalho do GAAP e o cuidado com os porquinhos. Você escolhe como participar, direto na campanha oficial.</p><a href={links.support} target="_blank" rel="noopener noreferrer" class="button button-lime">Apoiar o GAAP no Apoia.se <Arrow diagonal /></a><span class="external-note">Sua contribuição acontece na plataforma Apoia.se.</span></div><div class="support-visual"><div class="support-photo-ring"><Media mediaId="support" class="support-photo" fallbackTitle="Um futuro com mais cuidado." /></div><div class="support-seal"><Flower /><span>cuidar<br />é um verbo<br /><em>coletivo.</em></span></div><svg class="support-embrace" viewBox="0 0 500 550" fill="none" aria-hidden="true"><path d="M68 64C-56 240 7 509 251 518c241 9 293-309 161-451M63 41l6 28 30-2M408 31l5 36-31 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg></div></div></section>

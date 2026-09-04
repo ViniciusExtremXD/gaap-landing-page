@@ -1,0 +1,62 @@
+[
+  {
+    "id": "hero",
+    "original": "assets/originals/rony-farofa.jpg",
+    "localPath": "/media/hero.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 121054,
+    "focalPoint": "50% 75%",
+    "note": "Redimensionamento e compressão; sem alteração de conteúdo."
+  },
+  {
+    "id": "rony-farofa",
+    "original": "assets/originals/rony-farofa.jpg",
+    "localPath": "/media/rony-farofa.webp",
+    "width": 1086,
+    "height": 1448,
+    "bytes": 121054,
+    "focalPoint": "50% 75%",
+    "note": "Redimensionamento e compressão; sem alteração de conteúdo."
+  },
+  {
+    "id": "bella",
+    "original": "assets/originals/bella.jpg",
+    "localPath": "/media/bella.webp",
+    "width": 1080,
+    "height": 1432,
+    "bytes": 97436,
+    "focalPoint": "50% 65%",
+    "note": "Redimensionamento e compressão; sem alteração de conteúdo."
+  },
+  {
+    "id": "ravena",
+    "original": "assets/originals/ravena.jpg",
+    "localPath": "/media/ravena.webp",
+    "width": 1080,
+    "height": 1440,
+    "bytes": 53076,
+    "focalPoint": "50% 45%",
+    "note": "Redimensionamento e compressão; sem alteração de conteúdo."
+  },
+  {
+    "id": "support",
+    "original": "assets/originals/estelar.jpg",
+    "localPath": "/media/support.webp",
+    "width": 1080,
+    "height": 1440,
+    "bytes": 123332,
+    "focalPoint": "57% 46%",
+    "note": "Redimensionamento e compressão; sem alteração de conteúdo."
+  },
+  {
+    "id": "churros",
+    "original": "assets/originals/churros-adocao.jpg",
+    "localPath": "/media/churros.webp",
+    "width": 1200,
+    "height": 914,
+    "bytes": 36558,
+    "focalPoint": "50% 50%",
+    "note": "Recorte editorial da parte inferior da arte: remove chamada antiga de adoção, preserva retrato e logo GAAP. Status adotado apresentado junto da imagem."
+  }
+]

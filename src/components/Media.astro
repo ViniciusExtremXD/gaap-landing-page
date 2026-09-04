@@ -1,0 +1,44 @@
+---
+import { media } from '../data/gaap';
+import { siteUrl } from '../lib/site-url';
+import Arrow from './Arrow.astro';
+interface Props { mediaId: string; class?: string; eager?: boolean; caption?: string; playable?: boolean; fallbackTitle?: string }
+const { mediaId, class: className = '', eager = false, playable = false, fallbackTitle = 'Um pequeno encontro.' } = Astro.props;
+const item = media.find((entry) => entry.id === mediaId);
+const localImage = item?.mode === 'local' && item.kind === 'image' && item.localPath;
+const localVideo = item?.mode === 'local' && item.kind === 'video' && item.localPath;
+const embed = item?.mode === 'embed';
+const stem = localImage ? item.localPath?.replace(/\.webp$/, '') : '';
+const imageSources = localImage ? [
+  `${siteUrl(`${stem}-480.webp`)} 480w`,
+  `${siteUrl(`${stem}-800.webp`)} 800w`,
+  `${siteUrl(`${stem}.webp`)} ${item.width || 1200}w`,
+].join(', ') : undefined;
+const postMatch = item?.sourceUrl.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/);
+const embedUrl = embed && postMatch ? `https://www.instagram.com/${postMatch[1]}/${postMatch[2]}/embed/` : undefined;
+---
+<div class:list={['media-frame', className, { 'media-playable': playable }]} data-media data-title={item?.alt || fallbackTitle} data-embed-url={embedUrl}>
+  {localImage ? (
+    <><img src={siteUrl(item.localPath!)} srcset={imageSources} sizes={eager ? '(max-width: 760px) 88vw, 48vw' : '(max-width: 760px) 85vw, 36vw'} alt={item.alt} width={item.width || 900} height={item.height || 1200} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" style={`object-position:${item.focalPoint || '50% 50%'}`} /><div class="media-unavailable" data-image-fallback hidden><span>{item.alt}</span><small>O retrato não carregou desta vez.</small></div></>
+  ) : localVideo ? (
+    <video data-video controls playsinline preload="none" poster={item.poster ? siteUrl(item.poster) : undefined} width={item.width || 720} height={item.height || 1280} aria-label={item.alt}>
+      <source src={siteUrl(item.localPath!)} type="video/mp4" />
+      Seu navegador não reproduz este vídeo. Acesse a publicação original abaixo.
+    </video>
+  ) : (
+    <div class="media-facade">
+      <span class="facade-eyebrow">do lado de lá, no Instagram</span>
+      <span class="facade-cui" aria-hidden="true">cuí!</span>
+      <span class="facade-title">{fallbackTitle}</span>
+      {embed && <button type="button" class="button button-light" data-play>Ver publicação <Arrow diagonal /></button>}
+      {!embed && item && <a class="button button-light" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Conhecer no Instagram <Arrow diagonal /></a>}
+    </div>
+  )}
+  {(localVideo || embed) && <>
+    {localVideo && <button class="media-start" type="button" data-play aria-label={`Reproduzir: ${item.alt}`}><svg width="21" height="23" viewBox="0 0 21 23" aria-hidden="true"><path d="m3 2 15 9.5L3 21Z" fill="currentColor" /></svg></button>}
+    <div data-embed-host></div>
+    <button class="close-player" data-close-player type="button" hidden>Fechar publicação ×</button>
+    <p class="media-status" data-media-status role="status"></p>
+    <a class="media-original-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Abrir no Instagram <Arrow diagonal /></a>
+  </>}
+</div>

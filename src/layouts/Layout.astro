@@ -1,0 +1,32 @@
+---
+import '@fontsource/dm-sans/latin-400.css';
+import '@fontsource/dm-sans/latin-500.css';
+import '@fontsource/dm-sans/latin-600.css';
+import '@fontsource/fraunces/latin-400.css';
+import '@fontsource/fraunces/latin-400-italic.css';
+import '../styles/global.css';
+import { siteUrl } from '../lib/site-url';
+interface Props { title?: string; description?: string }
+const { title = 'GAAP — Pequenas vidas. Grandes recomeços.', description = 'Conheça o Grupo de Apoio Amigos do Pudim: resgate, acolhimento e adoção consciente de porquinhos-da-índia em São Paulo. Saiba como apoiar.' } = Astro.props;
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f9f6ef" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <link rel="icon" href={siteUrl('/favicon.svg')} type="image/svg+xml" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+    <slot />
+    <script>import '../scripts/site';</script>
+  </body>
+</html>

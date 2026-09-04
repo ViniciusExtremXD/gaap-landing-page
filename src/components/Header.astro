@@ -1,0 +1,13 @@
+---
+import { links } from '../data/gaap';
+import { siteUrl } from '../lib/site-url';
+import Arrow from './Arrow.astro';
+---
+<header class="site-header" data-header>
+  <div class="header-inner container">
+    <a href={siteUrl('/')} class="brand" aria-label="GAAP — início"><img src={siteUrl('/media/logo.webp')} width="48" height="48" alt="" /><span class="brand-word">gaap<span class="brand-dot">.</span></span><span class="brand-caption">amigos<br />do Pudim</span></a>
+    <nav class="desktop-nav" aria-label="Principal"><a href={siteUrl('/#o-projeto')}>O projeto</a><a href={siteUrl('/#historias')}>Histórias</a><a href={siteUrl('/#como-ajudar')}>Como ajudar</a></nav>
+    <div class="header-actions"><a href={links.support} class="button button-dark header-support" target="_blank" rel="noopener noreferrer">Apoiar o projeto <Arrow diagonal /></a><button type="button" class="menu-toggle" data-menu-toggle aria-controls="mobile-navigation" aria-expanded="false" aria-label="Abrir menu"><span></span><span></span></button></div>
+  </div>
+  <nav id="mobile-navigation" data-mobile-menu class="mobile-nav" aria-label="Principal no celular" hidden><a href={siteUrl('/#o-projeto')}>O projeto</a><a href={siteUrl('/#historias')}>Histórias</a><a href={siteUrl('/#como-ajudar')}>Como ajudar</a><a href={links.instagram} target="_blank" rel="noopener noreferrer">Instagram <Arrow diagonal /></a></nav>
+</header>

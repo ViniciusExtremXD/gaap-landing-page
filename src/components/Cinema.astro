@@ -1,0 +1,12 @@
+---
+import { videos } from '../data/gaap';
+import Media from './Media.astro';
+import Arrow from './Arrow.astro';
+---
+<section class="cinema-section section-space" aria-labelledby="cinema-title" data-cinema>
+  <div class="container cinema-heading"><div><p class="eyebrow"><span class="chapter-number">03 /</span> aperte o play, chegue mais perto</p><h2 id="cinema-title">Um pouquinho<br />do nosso <em>mundo.</em></h2></div><div class="cinema-intro"><p>Os pequenos gestos. As descobertas.<br />A vida acontecendo, do jeitinho deles.</p><div class="cinema-controls"><button class="circle-button" data-cinema-prev type="button" aria-label="Vídeo anterior" disabled><Arrow class="arrow-back" /></button><span data-cinema-count>01 / {String(videos.length).padStart(2, '0')}</span><button class="circle-button" data-cinema-next type="button" aria-label="Próximo vídeo"><Arrow /></button></div></div></div>
+  <div class="cinema-track container" data-cinema-track tabindex="0" role="region" aria-label="Vídeos dos porquinhos. Use as setas ou os botões para navegar.">
+    {videos.map((video, index) => <article class="cinema-item" data-cinema-item aria-label={`${index + 1} de ${videos.length}: ${video.title}`}><div class="cinema-media-wrap"><Media mediaId={video.mediaId} class="cinema-media" playable fallbackTitle={video.title} /><span class="film-number" aria-hidden="true">0{index + 1}</span></div><div class="cinema-caption"><div><h3>{video.title}</h3><p>{video.description}</p></div><a href={video.url} target="_blank" rel="noopener noreferrer" class="circle-button" aria-label={`Abrir ${video.title} no Instagram`}><Arrow diagonal /></a></div></article>)}
+  </div>
+  <p class="container cinema-note">Uma seleção de publicações para chegar mais perto. Os vídeos continuam nos posts originais do Instagram.</p>
+</section>
