@@ -1,12 +1,24 @@
 ---
-import { videos } from '../data/gaap';
+import { videos, links } from '../data/gaap';
 import Media from './Media.astro';
 import Arrow from './Arrow.astro';
 ---
-<section class="cinema-section section-space" aria-labelledby="cinema-title" data-cinema>
-  <div class="container cinema-heading"><div><p class="eyebrow"><span class="chapter-number">03 /</span> aperte o play, chegue mais perto</p><h2 id="cinema-title">Um pouquinho<br />do nosso <em>mundo.</em></h2></div><div class="cinema-intro"><p>Os pequenos gestos. As descobertas.<br />A vida acontecendo, do jeitinho deles.</p><div class="cinema-controls"><button class="circle-button" data-cinema-prev type="button" aria-label="Vídeo anterior" disabled><Arrow class="arrow-back" /></button><span data-cinema-count>01 / {String(videos.length).padStart(2, '0')}</span><button class="circle-button" data-cinema-next type="button" aria-label="Próximo vídeo"><Arrow /></button></div></div></div>
-  <div class="cinema-track container" data-cinema-track tabindex="0" role="region" aria-label="Vídeos dos porquinhos. Use as setas ou os botões para navegar.">
-    {videos.map((video, index) => <article class="cinema-item" data-cinema-item aria-label={`${index + 1} de ${videos.length}: ${video.title}`}><div class="cinema-media-wrap"><Media mediaId={video.mediaId} class="cinema-media" playable fallbackTitle={video.title} /><span class="film-number" aria-hidden="true">0{index + 1}</span></div><div class="cinema-caption"><div><h3>{video.title}</h3><p>{video.description}</p></div><a href={video.url} target="_blank" rel="noopener noreferrer" class="circle-button" aria-label={`Abrir ${video.title} no Instagram`}><Arrow diagonal /></a></div></article>)}
+<section class="cinema-section section-space" aria-labelledby="cinema-title" data-cinema style={`--cinema-step:${1 / videos.length}`}>
+  <div class="container cinema-heading">
+    <div data-reveal><p class="eyebrow"><span class="chapter-number">03 /</span> chegue mais perto</p><h2 id="cinema-title">Um pouquinho<br />do nosso <em>mundo.</em></h2></div>
+    <div class="cinema-intro" data-reveal style="--reveal-delay:120ms"><p>Os pequenos gestos. As descobertas.<br />A vida acontecendo, do jeitinho deles.</p><div class="cinema-controls"><button class="circle-button" data-cinema-prev type="button" aria-label="Publicação anterior" aria-controls="cinema-track" disabled><Arrow class="arrow-back" /></button><span data-cinema-count aria-live="polite" aria-atomic="true">01 / {String(videos.length).padStart(2, '0')}</span><button class="circle-button" data-cinema-next type="button" aria-label="Próxima publicação" aria-controls="cinema-track"><Arrow /></button></div></div>
   </div>
-  <p class="container cinema-note">Uma seleção de publicações para chegar mais perto. Os vídeos continuam nos posts originais do Instagram.</p>
+  <div class="cinema-track container" id="cinema-track" data-cinema-track tabindex="0" role="region" aria-roledescription="carrossel" aria-label="Publicações dos porquinhos. Use as setas do teclado, os botões ou arraste para explorar.">
+    {videos.map((video, index) => <article class:list={['cinema-item', { 'is-active': index === 0 }]} data-cinema-item aria-label={`${index + 1} de ${videos.length}: ${video.title}`}>
+      <div class="cinema-media-wrap"><Media mediaId={video.mediaId} class="cinema-media" playable fallbackTitle={video.title} /><span class="film-number" aria-hidden="true">0{index + 1}</span></div>
+      <div class="cinema-caption"><div><h3>{video.title}</h3><p>{video.description}</p></div><a href={video.url} target="_blank" rel="noopener noreferrer" class="circle-button" aria-label={`Abrir ${video.title} no Instagram`}><Arrow diagonal /></a></div>
+    </article>)}
+    <aside class="cinema-outro"><span class="eyebrow">o próximo encontro</span><span class="outro-flower" aria-hidden="true">✳</span><h3>Tem mais vida<br /><em>do lado de lá.</em></h3><p>Acompanhe os pequenos momentos<br />no perfil do GAAP.</p><a href={links.instagram} target="_blank" rel="noopener noreferrer" class="text-link">Ir para o Instagram <Arrow diagonal /></a></aside>
+  </div>
+  <div class="container cinema-bottom">
+    <p class="cinema-drag-hint"><span aria-hidden="true">↔</span> <span class="drag-desktop">Arraste para descobrir</span><span class="drag-touch">Deslize para descobrir</span></p>
+    <div class="cinema-progress" aria-hidden="true"><span></span></div>
+    <div class="cinema-pagination" role="group" aria-label="Escolher publicação">{videos.map((video, index) => <button type="button" data-cinema-go={index} aria-controls="cinema-track" aria-label={`Ir para publicação ${index + 1}: ${video.title}`} aria-current={index === 0 ? 'true' : undefined}><span></span></button>)}</div>
+  </div>
+  <p class="container cinema-note">Encontros que continuam no Instagram. Abra uma publicação para assistir no perfil de origem.</p>
 </section>

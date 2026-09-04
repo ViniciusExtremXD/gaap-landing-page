@@ -2,6 +2,7 @@
 import { media } from '../data/gaap';
 import { siteUrl } from '../lib/site-url';
 import Arrow from './Arrow.astro';
+import PublicationCover from './PublicationCover.astro';
 interface Props { mediaId: string; class?: string; eager?: boolean; caption?: string; playable?: boolean; fallbackTitle?: string }
 const { mediaId, class: className = '', eager = false, playable = false, fallbackTitle = 'Um pequeno encontro.' } = Astro.props;
 const item = media.find((entry) => entry.id === mediaId);
@@ -27,8 +28,7 @@ const embedUrl = embed && postMatch ? `https://www.instagram.com/${postMatch[1]}
     </video>
   ) : (
     <div class="media-facade">
-      <span class="facade-eyebrow">do lado de lá, no Instagram</span>
-      <span class="facade-cui" aria-hidden="true">cuí!</span>
+      <PublicationCover mediaId={mediaId} />
       <span class="facade-title">{fallbackTitle}</span>
       {embed && <button type="button" class="button button-light" data-play>Ver publicação <Arrow diagonal /></button>}
       {!embed && item && <a class="button button-light" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Conhecer no Instagram <Arrow diagonal /></a>}

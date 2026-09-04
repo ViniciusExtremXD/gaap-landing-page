@@ -30,9 +30,9 @@ npm run preview
 npm run build:pages
 ```
 
-Esse comando valida o conteúdo para o destino autorizado, configura a base `/gaap-landing-page/`, gera `dist/`, verifica caminhos de arquivos e âncoras das duas páginas e cria `.nojekyll`. A página de privacidade, as imagens responsivas, as fontes e os scripts usam essa mesma base.
+Esse comando valida o conteúdo para o destino autorizado, configura a base `/gaap-landing-page/`, gera `dist-pages/`, verifica caminhos de arquivos e âncoras das duas páginas e cria `.nojekyll`. A página de privacidade, as imagens responsivas, as fontes e os scripts usam essa mesma base. O build local permanece em `dist/`, de modo que publicar não quebra a prévia local.
 
-O GitHub Pages publica o conteúdo estático da raiz da branch `gh-pages`. A branch `main` contém o código-fonte. Para atualizar a versão pública, execute as verificações e o build acima, copie o conteúdo de `dist/` para um checkout de `gh-pages`, faça commit e push. Alterações em `main` não publicam automaticamente.
+O GitHub Pages publica o conteúdo estático da raiz da branch `gh-pages`. A branch `main` contém o código-fonte. Para atualizar a versão pública, execute as verificações e o build acima, copie o conteúdo de `dist-pages/` para um checkout de `gh-pages`, faça commit e push. Alterações em `main` não publicam automaticamente.
 
 ## Conteúdo e manutenção
 
@@ -45,7 +45,9 @@ O GitHub Pages publica o conteúdo estático da raiz da branch `gh-pages`. A bra
 
 A pesquisa selecionou conteúdo institucional e histórias acessíveis; não é uma cópia de todo o Instagram. A prestação de contas vinculada é de **2023**. Histórias de adoções concluídas não representam disponibilidade atual.
 
-O movimento inclui abertura com máscara, fotografias que se acomodam ao entrar na tela e um percurso de cuidado desenhado em SVG. O controle **Reduzir movimentos** respeita inicialmente a preferência do sistema e salva escolhas manuais. O carrossel não avança sozinho.
+O movimento inclui abertura com máscara, entradas em sequência, profundidade sutil nas fotografias durante a rolagem, faixa editorial em movimento e percurso de cuidado desenhado em SVG. O cabeçalho destaca a logo oficial, os canais Instagram/Linktree e o progresso de leitura. A rolagem permanece nativa; efeitos de profundidade são atualizados sob demanda a cada quadro.
+
+O carrossel aceita arrasto no desktop, gestos nativos no celular, setas do teclado, botões e indicadores de posição. As publicações têm capas editoriais próprias e um convite final para acompanhar o Instagram. Não há avanço automático. O controle **Reduzir movimentos** respeita inicialmente a preferência do sistema e salva escolhas manuais; os deslocamentos, animações contínuas e transições são desativados imediatamente nesse modo.
 
 ## Fotografias, vídeos e direitos
 

@@ -21,7 +21,7 @@ run('node_modules/tsx/dist/cli.mjs', ['scripts/validate-content.ts', 'publish', 
 run('node_modules/astro/bin/astro.mjs', ['build']);
 
 // Verify the actual emitted pages under the repository URL, including anchors and responsive assets.
-const dist = resolve(root, 'dist');
+const dist = resolve(root, config.outDir);
 const documents = new Map();
 let checked = 0;
 for (const route of ['', 'privacidade/']) {

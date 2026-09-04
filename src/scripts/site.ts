@@ -1,3 +1,5 @@
+import { initializeScrollMotion } from './scroll-motion';
+
 type MotionPreference = 'full' | 'reduced';
 
 const MOTION_STORAGE_KEY = 'gaap-motion';
@@ -25,13 +27,6 @@ export function initializeSite(doc: Document, win: Window): () => void {
     win as Window & { IntersectionObserver?: typeof IntersectionObserver }
   ).IntersectionObserver;
 
-  const header = doc.querySelector<HTMLElement>('[data-header]');
-  if (header) {
-    const updateHeader = () => header.classList.toggle('is-scrolled', win.scrollY > 16);
-    updateHeader();
-    cleanups.push(listen(win, 'scroll', updateHeader, { passive: true }));
-  }
-
   const menuToggle = doc.querySelector<HTMLButtonElement>('[data-menu-toggle]');
   const mobileMenu = doc.querySelector<HTMLElement>('[data-mobile-menu]');
   if (menuToggle && mobileMenu) {
@@ -56,6 +51,9 @@ export function initializeSite(doc: Document, win: Window): () => void {
       listen(mobileMenu, 'click', (event) => {
         if ((event.target as Element).closest('a[href]')) setMenuOpen(false);
       }),
+      listen(win, 'resize', () => {
+        if (win.innerWidth >= 1181 && menuToggle.getAttribute('aria-expanded') === 'true') setMenuOpen(false);
+      }, { passive: true }),
     );
   }
 
@@ -85,6 +83,7 @@ export function initializeSite(doc: Document, win: Window): () => void {
   const systemMotion = win.matchMedia?.('(prefers-reduced-motion: reduce)');
   let hasManualMotion = storedMotion !== null;
   let motion: MotionPreference = storedMotion ?? (systemMotion?.matches ? 'reduced' : 'full');
+  let scrollMotion: ReturnType<typeof initializeScrollMotion> | undefined;
 
   const renderMotion = () => {
     root.dataset.motion = motion;
@@ -106,9 +105,12 @@ export function initializeSite(doc: Document, win: Window): () => void {
         else item.style.removeProperty('--tilt');
       });
     }
+    scrollMotion?.refreshMotion();
   };
 
   renderMotion();
+  scrollMotion = initializeScrollMotion(doc, win, () => motion === 'reduced');
+  cleanups.push(scrollMotion.cleanup);
   if (systemMotion) {
     const followSystemMotion = (event: MediaQueryListEvent) => {
       if (hasManualMotion) return;
@@ -309,6 +311,7 @@ export function initializeSite(doc: Document, win: Window): () => void {
     const previous = cinema.querySelector<HTMLButtonElement>('[data-cinema-prev]');
     const next = cinema.querySelector<HTMLButtonElement>('[data-cinema-next]');
     const count = cinema.querySelector<HTMLElement>('[data-cinema-count]');
+    const dots = [...cinema.querySelectorAll<HTMLButtonElement>('[data-cinema-go]')];
     if (!track || !items.length) return;
 
     const edgeTolerance = 2;
@@ -330,11 +333,19 @@ export function initializeSite(doc: Document, win: Window): () => void {
       }
       activeIndex = index;
       items.forEach((item, index) => {
+        item.classList.toggle('is-active', index === activeIndex);
         if (index === activeIndex) item.setAttribute('aria-current', 'true');
         else item.removeAttribute('aria-current');
       });
+      dots.forEach((dot) => {
+        const selected = Number(dot.dataset.cinemaGo) === activeIndex;
+        if (selected) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+      cinema.style.setProperty('--cinema-progress', String(items.length > 1 ? activeIndex / (items.length - 1) : 1));
       if (count) count.textContent = `${twoDigits(activeIndex + 1)} / ${twoDigits(items.length)}`;
       const canScroll = maximumScroll() > edgeTolerance;
+      track.classList.toggle('is-draggable', canScroll);
       if (previous) previous.disabled = !canScroll || activeIndex === 0;
       if (next) next.disabled = !canScroll || activeIndex === items.length - 1;
     };
@@ -378,7 +389,32 @@ export function initializeSite(doc: Document, win: Window): () => void {
     };
     const updateForResize = () => {
       pendingTarget = null;
-      renderIndex(indexAtScrollPosition());
+      renderIndex(activeIndex);
+      if (maximumScroll() > edgeTolerance) {
+        const left = Math.min(maximumScroll(), Math.max(0, itemStart(activeIndex)));
+        pendingTarget = { index: activeIndex, left };
+        track.scrollTo({ left, behavior: 'auto' });
+      }
+    };
+
+    let drag: { id: number; x: number; y: number; left: number; moved: boolean } | null = null;
+    let suppressClick = false;
+    let originalSnap = '';
+    let originalBehavior = '';
+    const restoreDragStyles = () => {
+      track.classList.remove('is-dragging');
+      track.style.scrollSnapType = originalSnap;
+      track.style.scrollBehavior = originalBehavior;
+    };
+    const releaseDrag = (event: Event) => {
+      if (!drag || (event as PointerEvent).pointerId !== drag.id) return;
+      const previousDrag = drag;
+      drag = null;
+      if (track.hasPointerCapture?.(previousDrag.id)) track.releasePointerCapture(previousDrag.id);
+      if (!previousDrag.moved) return;
+      restoreDragStyles();
+      suppressClick = event.type !== 'pointercancel';
+      goTo(indexAtScrollPosition());
     };
 
     renderIndex(0);
@@ -387,6 +423,47 @@ export function initializeSite(doc: Document, win: Window): () => void {
       listen(track, 'pointerdown', cancelPendingTarget, { passive: true }),
       listen(track, 'touchstart', cancelPendingTarget, { passive: true }),
       listen(track, 'wheel', cancelPendingTarget, { passive: true }),
+      listen(track, 'pointerdown', (event) => {
+        const pointer = event as PointerEvent;
+        suppressClick = false;
+        if (!['mouse', 'pen'].includes(pointer.pointerType) || pointer.button !== 0 || maximumScroll() <= edgeTolerance) return;
+        if ((pointer.target as Element).closest('a, button, input, select, textarea, video, iframe, summary, [contenteditable], [role="button"], [data-no-drag]')) return;
+        drag = { id: pointer.pointerId, x: pointer.clientX, y: pointer.clientY, left: track.scrollLeft, moved: false };
+      }),
+      listen(win, 'pointermove', (event) => {
+        const pointer = event as PointerEvent;
+        if (!drag || pointer.pointerId !== drag.id) return;
+        const deltaX = pointer.clientX - drag.x;
+        const deltaY = pointer.clientY - drag.y;
+        if (!drag.moved) {
+          if (Math.abs(deltaY) > 8 && Math.abs(deltaY) > Math.abs(deltaX)) {
+            drag = null;
+            return;
+          }
+          if (Math.abs(deltaX) < 7 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+          drag.moved = true;
+          originalSnap = track.style.scrollSnapType;
+          originalBehavior = track.style.scrollBehavior;
+          track.style.scrollSnapType = 'none';
+          track.style.scrollBehavior = 'auto';
+          track.classList.add('is-dragging');
+          track.setPointerCapture?.(pointer.pointerId);
+        }
+        pointer.preventDefault();
+        track.scrollLeft = Math.min(maximumScroll(), Math.max(0, drag.left - deltaX));
+      }),
+      listen(win, 'pointerup', releaseDrag),
+      listen(win, 'pointercancel', releaseDrag),
+      listen(track, 'lostpointercapture', releaseDrag),
+      listen(track, 'dragstart', (event) => {
+        if (drag) event.preventDefault();
+      }),
+      listen(track, 'click', (event) => {
+        if (!suppressClick || (event as MouseEvent).detail === 0) return;
+        suppressClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, true),
       listen(track, 'click', (event) => {
         const target = event.target as Element;
         if (!target.closest('[data-play]')) return;
@@ -412,6 +489,14 @@ export function initializeSite(doc: Document, win: Window): () => void {
     );
     if (previous) cleanups.push(listen(previous, 'click', () => goTo(activeIndex - 1)));
     if (next) cleanups.push(listen(next, 'click', () => goTo(activeIndex + 1)));
+    dots.forEach((dot) => cleanups.push(listen(dot, 'click', () => {
+      const index = Number(dot.dataset.cinemaGo);
+      if (Number.isInteger(index) && index >= 0 && index < items.length) goTo(index);
+    })));
+    cleanups.push(() => {
+      if (drag?.moved) restoreDragStyles();
+      drag = null;
+    });
   });
 
   return () => {

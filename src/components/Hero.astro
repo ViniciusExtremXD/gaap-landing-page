@@ -8,11 +8,11 @@ import Media from './Media.astro';
   <div class="hero-copy">
     <p class="eyebrow hero-eyebrow"><span class="tiny-spark" aria-hidden="true">✳</span> pequenos encontros. grandes afetos.</p>
     <h1 id="hero-title"><span class="hero-title-line">Pequenas</span><span class="hero-title-line">vidas<span class="title-stop">.</span></span><em>Grandes recomeços.</em></h1>
-    <p class="hero-description">Somos o GAAP. Resgatamos e acolhemos porquinhos-da-índia em São Paulo, conectando pequenas vidas a novos lares.</p>
-    <div class="hero-ctas"><a class="button button-purple" href={links.support} target="_blank" rel="noopener noreferrer">Apoiar no Apoia.se <Arrow diagonal /></a><a class="text-link" href="#historias">Conhecer as histórias <Arrow /></a></div>
+    <p class="hero-description" data-reveal style="--reveal-delay:180ms">Somos o GAAP. Resgatamos e acolhemos porquinhos-da-índia em São Paulo, conectando pequenas vidas a novos lares.</p>
+    <div class="hero-ctas" data-reveal style="--reveal-delay:260ms"><a class="button button-purple" href={links.support} target="_blank" rel="noopener noreferrer">Apoiar no Apoia.se <Arrow diagonal /></a><a class="text-link" href="#historias">Conhecer as histórias <Arrow /></a></div>
     <div class="hero-footnote"><span class="little-line" aria-hidden="true"></span><p>Cuidado que acolhe.<br />Adoção que transforma.</p></div>
   </div>
-  <div class="hero-visual">
+  <div class="hero-visual" data-parallax="24">
     <div class="hero-photo-shell"><Media mediaId="hero" class="hero-photo" eager fallbackTitle="Pequenos protagonistas. Histórias de verdade." /><span class="photo-corner" aria-hidden="true">com amor, GAAP</span></div>
     <div class="hero-seal"><Flower /><span>todo<br /><em>cuidado</em><br />importa</span></div>
     <div class="hero-mini"><Media mediaId="bella" class="hero-mini-photo" /><span>um mundo em um pequeno colo.</span></div>
