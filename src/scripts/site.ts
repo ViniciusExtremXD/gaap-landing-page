@@ -1,9 +1,6 @@
 import { initializeScrollMotion } from './scroll-motion';
 import { initializeCarouselAutoplay } from './carousel-autoplay';
 
-type MotionPreference = 'full' | 'reduced';
-
-const MOTION_STORAGE_KEY = 'gaap-motion';
 const EMBED_URL = /^https:\/\/www\.instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]+\/embed\/?$/;
 
 function listen(
@@ -22,7 +19,6 @@ function twoDigits(value: number) {
 
 export function initializeSite(doc: Document, win: Window): () => void {
   const cleanups: Array<() => void> = [];
-  const motionRefreshers: Array<() => void> = [];
   const observers: IntersectionObserver[] = [];
   const root = doc.documentElement;
   const IntersectionObserverConstructor = (
@@ -60,11 +56,8 @@ export function initializeSite(doc: Document, win: Window): () => void {
   }
 
   const albums = [...doc.querySelectorAll<HTMLElement>('[data-album]')];
-  const albumItems = [...doc.querySelectorAll<HTMLElement>('[data-album-item]')];
-  const albumTilts = new Map(albumItems.map((item) => [item, item.style.getPropertyValue('--tilt')]));
   const careSections = [...doc.querySelectorAll<HTMLElement>('[data-care-section]')];
   const carePaths = [...doc.querySelectorAll<SVGPathElement>('[data-care-path]')];
-  const motionToggles = [...doc.querySelectorAll<HTMLButtonElement>('[data-motion-toggle]')];
 
   carePaths.forEach((path) => {
     path.setAttribute('pathLength', '1');
@@ -72,87 +65,10 @@ export function initializeSite(doc: Document, win: Window): () => void {
     path.style.strokeDashoffset = 'calc(1 - var(--care-progress))';
   });
 
-  const readStoredMotion = (): MotionPreference | null => {
-    try {
-      const stored = win.localStorage.getItem(MOTION_STORAGE_KEY);
-      return stored === 'full' || stored === 'reduced' ? stored : null;
-    } catch {
-      return null;
-    }
-  };
-
-  // This explicit demonstration link overrides saved/system preferences for this site only.
-  const requestedMotion = new URL(win.location.href).searchParams.get('motion');
-  const demoMotion = requestedMotion === 'full' ? 'full' : null;
-  if (demoMotion) {
-    try { win.localStorage.setItem(MOTION_STORAGE_KEY, demoMotion); } catch { /* session still works */ }
-    try {
-      const url = new URL(win.location.href);
-      url.searchParams.delete('motion');
-      win.history.replaceState(win.history.state, '', url.href);
-    } catch { /* query is optional to remove */ }
-  }
-  const storedMotion = demoMotion ?? readStoredMotion();
-  const systemMotion = win.matchMedia?.('(prefers-reduced-motion: reduce)');
-  let hasManualMotion = storedMotion !== null;
-  let motion: MotionPreference = storedMotion ?? (systemMotion?.matches ? 'reduced' : 'full');
-  let scrollMotion: ReturnType<typeof initializeScrollMotion> | undefined;
-
-  const renderMotion = () => {
-    root.dataset.motion = motion;
-    const reduced = motion === 'reduced';
-    motionToggles.forEach((toggle) => {
-      toggle.setAttribute('aria-pressed', String(reduced));
-      const label = toggle.querySelector<HTMLElement>('[data-motion-label]');
-      if (label) label.textContent = 'Reduzir movimentos';
-      const quickLabel = toggle.querySelector<HTMLElement>('[data-motion-quick-label]');
-      if (quickLabel) {
-        toggle.removeAttribute('aria-pressed');
-        quickLabel.textContent = reduced ? 'Ativar animações' : 'Pausar animações';
-      }
-    });
-
-    if (reduced) {
-      albums.forEach((album) => album.classList.add('is-settled'));
-      albumItems.forEach((item) => item.style.setProperty('--tilt', '0deg'));
-      root.style.setProperty('--care-progress', '1');
-    } else {
-      albumItems.forEach((item) => {
-        const tilt = albumTilts.get(item);
-        if (tilt) item.style.setProperty('--tilt', tilt);
-        else item.style.removeProperty('--tilt');
-      });
-    }
-    scrollMotion?.refreshMotion();
-    motionRefreshers.forEach(refresh => refresh());
-  };
-
-  renderMotion();
-  scrollMotion = initializeScrollMotion(doc, win, () => motion === 'reduced');
+  // The requested experience always runs in full motion, including on reduced-motion devices.
+  root.dataset.motion = 'full';
+  const scrollMotion = initializeScrollMotion(doc, win, () => false);
   cleanups.push(scrollMotion.cleanup);
-  if (systemMotion) {
-    const followSystemMotion = (event: MediaQueryListEvent) => {
-      if (hasManualMotion) return;
-      motion = event.matches ? 'reduced' : 'full';
-      renderMotion();
-    };
-    systemMotion.addEventListener('change', followSystemMotion);
-    cleanups.push(() => systemMotion.removeEventListener('change', followSystemMotion));
-  }
-  motionToggles.forEach((toggle) => {
-    cleanups.push(
-      listen(toggle, 'click', () => {
-        motion = motion === 'reduced' ? 'full' : 'reduced';
-        hasManualMotion = true;
-        try {
-          win.localStorage.setItem(MOTION_STORAGE_KEY, motion);
-        } catch {
-          // Storage can be disabled; the preference still applies for this visit.
-        }
-        renderMotion();
-      }),
-    );
-  });
 
   if (IntersectionObserverConstructor) {
     if (albums.length) {
@@ -173,7 +89,6 @@ export function initializeSite(doc: Document, win: Window): () => void {
     if (careSections.length) {
       const careObserver = new IntersectionObserverConstructor(
         (entries) => {
-          if (motion === 'reduced') return;
           const visible = entries
             .filter((entry) => entry.isIntersecting)
             .reduce((maximum, entry) => Math.max(maximum, entry.intersectionRatio), 0);
@@ -399,7 +314,7 @@ export function initializeSite(doc: Document, win: Window): () => void {
       renderIndex(targetIndex);
       track.scrollTo({
         left,
-        behavior: motion === 'reduced' ? 'auto' : 'smooth',
+        behavior: 'smooth',
       });
     };
 
@@ -512,9 +427,8 @@ export function initializeSite(doc: Document, win: Window): () => void {
       const index = Number(dot.dataset.cinemaGo);
       if (Number.isInteger(index) && index >= 0 && index < items.length) goTo(index);
     })));
-    const autoplay = initializeCarouselAutoplay(cinema, doc, win, () => motion === 'reduced',
+    const autoplay = initializeCarouselAutoplay(cinema, doc, win, () => false,
       () => goTo((activeIndex + 1) % items.length));
-    motionRefreshers.push(autoplay.refreshMotion);
     cleanups.push(autoplay.cleanup);
     cleanups.push(() => {
       if (drag?.moved) restoreDragStyles();

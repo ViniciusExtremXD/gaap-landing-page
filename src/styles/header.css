@@ -110,3 +110,29 @@
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion=full]) .gaap-header *, :root:not([data-motion=full]) .gaap-header *::after { transition: none !important; animation: none !important; }
 }
+
+/* Direction-aware header: keep its space in the document while it glides away. */
+:root[data-motion=full] .site-header.gaap-header {
+  transform: translateY(0);
+  transition: transform 560ms cubic-bezier(.22,1,.36,1), background 400ms ease, box-shadow 400ms ease;
+}
+:root[data-motion=full] .site-header.gaap-header.is-hidden {
+  transform: translateY(calc(-100% - 8px));
+  pointer-events: none;
+  transition-duration: 360ms;
+}
+.gaap-header .brand { --header-delay: 40ms; }
+.gaap-header .desktop-nav a:nth-child(1) { --header-delay: 90ms; }
+.gaap-header .desktop-nav a:nth-child(2) { --header-delay: 140ms; }
+.gaap-header .desktop-nav a:nth-child(3) { --header-delay: 190ms; }
+.gaap-header .header-social-link:nth-child(1) { --header-delay: 220ms; }
+.gaap-header .header-social-link:nth-child(2) { --header-delay: 270ms; }
+.gaap-header .header-support, .gaap-header .menu-toggle { --header-delay: 300ms; }
+:root[data-motion=full] .gaap-header:not(.is-hidden) :is(.brand, .desktop-nav a, .header-social-link, .header-support, .menu-toggle) {
+  animation: header-reenter 650ms cubic-bezier(.22,1,.36,1) var(--header-delay, 0ms) backwards;
+}
+:root[data-motion=full] .gaap-header:not(.is-hidden) .header-social-link svg {
+  animation: header-icon-reenter 800ms cubic-bezier(.22,1,.36,1) var(--header-delay, 0ms) backwards, living-arrow 3.7s ease-in-out 1s infinite;
+}
+@keyframes header-reenter { from { opacity: 0; translate: 0 -12px; } to { opacity: 1; translate: 0 0; } }
+@keyframes header-icon-reenter { from { opacity: 0; scale: .65; rotate: -16deg; } to { opacity: 1; scale: 1; rotate: 0deg; } }

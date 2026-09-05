@@ -126,24 +126,13 @@ function createPage(
   return { dom, window, document: window.document, cleanup, intersect, setReducedMotion, flushFrames, frames };
 }
 
-test('explicit full-motion link overrides system and saved reduction and still allows pausing', () => {
-  const page = createPage('<button data-motion-toggle data-motion-quick><span data-motion-quick-label></span></button>', {
-    reduceMotion: true,
-    beforeInitialize(window) {
-      window.localStorage.setItem('gaap-motion', 'reduced');
-      window.history.replaceState(null, '', '?motion=full');
-    },
-  });
+test('full motion ignores saved reduction and system changes without a special link', () => {
+  const page = createPage('<main><p>Olá</p></main>', { reduceMotion: true, beforeInitialize(window) { window.localStorage.setItem('gaap-motion', 'reduced'); } });
   assert.equal(page.document.documentElement.dataset.motion, 'full');
-  assert.equal(page.window.localStorage.getItem('gaap-motion'), 'full');
-  assert.equal(page.window.location.search, '');
-  assert.equal(page.document.querySelector('[data-motion-quick-label]')!.textContent, 'Pausar animações');
+  page.setReducedMotion(false);
   page.setReducedMotion(true);
   assert.equal(page.document.documentElement.dataset.motion, 'full');
-  page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click();
-  assert.equal(page.document.documentElement.dataset.motion, 'reduced');
-  assert.equal(page.window.localStorage.getItem('gaap-motion'), 'reduced');
-  assert.equal(page.document.querySelector('[data-motion-quick-label]')!.textContent, 'Ativar animações');
+  assert.equal(page.window.location.search, '');
   page.cleanup();
 });
 
@@ -181,8 +170,8 @@ test('page scroll updates progress and section navigation in one frame without a
   page.cleanup();
 });
 
-test('reveals settle once and the reduced motion control immediately removes parallax', () => {
-  const page = createPage('<button data-motion-toggle></button><section data-reveal></section><figure data-parallax="18"></figure>', {
+test('reveals settle once and parallax remains active after system changes', () => {
+  const page = createPage('<section data-reveal></section><figure data-parallax="18"></figure>', {
     beforeInitialize(window) {
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
       window.document.querySelector<HTMLElement>('[data-parallax]')!.getBoundingClientRect = () => ({ top: 0, bottom: 200, height: 200 }) as DOMRect;
@@ -197,12 +186,12 @@ test('reveals settle once and the reduced motion control immediately removes par
   assert.notEqual(parseFloat(parallax.style.getPropertyValue('--parallax-y')), 0);
   page.intersect(reveal, true);
   assert.equal(reveal.classList.contains('is-visible'), true);
-  page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click();
-  assert.equal(parallax.style.getPropertyValue('--parallax-y'), '');
+  page.setReducedMotion(true);
+  assert.notEqual(parallax.style.getPropertyValue('--parallax-y'), '');
   assert.equal(reveal.classList.contains('is-visible'), true);
   page.window.dispatchEvent(new page.window.Event('scroll'));
   page.flushFrames();
-  assert.equal(parallax.style.getPropertyValue('--parallax-y'), '');
+  assert.notEqual(parallax.style.getPropertyValue('--parallax-y'), '');
   page.cleanup();
 });
 
@@ -216,11 +205,11 @@ test('missing IntersectionObserver leaves all reveal content visible', () => {
   page.cleanup();
 });
 
-test('changing motion while a scroll frame is queued does not orphan animation work', () => {
-  const page = createPage('<button data-motion-toggle></button>');
+test('system preference changes do not orphan a queued scroll frame', () => {
+  const page = createPage('');
   page.window.dispatchEvent(new page.window.Event('scroll'));
   assert.equal(page.frames.size, 1);
-  page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click();
+  page.setReducedMotion(true);
   page.window.dispatchEvent(new page.window.Event('scroll'));
   assert.equal(page.frames.size, 1);
   page.cleanup();
@@ -273,54 +262,32 @@ test('an open mobile menu closes when the layout crosses into desktop', () => {
   page.cleanup();
 });
 
-test('motion preference defaults from the system and a manual choice persists', () => {
-  const page = createPage(`
-    <button data-motion-toggle aria-pressed="false"><span data-motion-label></span></button>
-    <section data-album><figure data-album-item style="--tilt: 3deg"></figure></section>
-  `, { reduceMotion: true });
-  const root = page.document.documentElement;
-  const button = page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!;
-  const albumItem = page.document.querySelector<HTMLElement>('[data-album-item]')!;
-
-  assert.equal(root.dataset.motion, 'reduced');
-  assert.equal(button.getAttribute('aria-pressed'), 'true');
-  assert.equal(page.document.querySelector('[data-motion-label]')!.textContent, 'Reduzir movimentos');
-  assert.equal(albumItem.style.getPropertyValue('--tilt'), '0deg');
-
-  button.click();
-  assert.equal(root.dataset.motion, 'full');
-  assert.equal(button.getAttribute('aria-pressed'), 'false');
-  assert.equal(page.window.localStorage.getItem('gaap-motion'), 'full');
-  assert.equal(page.document.querySelector('[data-motion-label]')!.textContent, 'Reduzir movimentos');
-  assert.equal(albumItem.style.getPropertyValue('--tilt'), '3deg');
-  page.cleanup();
-
-  const next = createPage('<button data-motion-toggle><span data-motion-label></span></button>', {
-    reduceMotion: true,
-  });
-  next.window.localStorage.setItem('gaap-motion', 'full');
-  next.cleanup();
-  initializeSite(next.document, next.window as unknown as Window);
-  assert.equal(next.document.documentElement.dataset.motion, 'full');
-});
-
-test('system motion changes apply until the visitor makes a manual choice', () => {
-  const page = createPage(`
-    <button data-motion-toggle aria-pressed="false"><span data-motion-label></span></button>
-  `);
-  const button = page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!;
-
-  page.setReducedMotion(true);
-  assert.equal(page.document.documentElement.dataset.motion, 'reduced');
-
-  button.click();
-  assert.equal(page.document.documentElement.dataset.motion, 'full');
-  page.setReducedMotion(true);
-  assert.equal(page.document.documentElement.dataset.motion, 'full');
+test('header hides down, returns up repeatedly, tolerates jitter and stays accessible', () => {
+  let y = 0;
+  const page = createPage('<header data-header><a href="#">Início</a></header>', { beforeInitialize(window) {
+    Object.defineProperty(window, 'scrollY', { get: () => y });
+    Object.defineProperty(window.document.documentElement, 'scrollHeight', { value: 5000 });
+  } });
+  const header = page.document.querySelector('header')!;
+  const scroll = (value: number) => { y = value; page.window.dispatchEvent(new page.window.Event('scroll')); page.flushFrames(); };
+  scroll(500); assert.equal(header.classList.contains('is-hidden'), true);
+  scroll(497); assert.equal(header.classList.contains('is-hidden'), true);
+  scroll(460); assert.equal(header.classList.contains('is-hidden'), false);
+  scroll(700); assert.equal(header.classList.contains('is-hidden'), true);
+  header.querySelector('a')!.focus(); assert.equal(header.classList.contains('is-hidden'), false);
+  scroll(800); assert.equal(header.classList.contains('is-hidden'), false);
+  header.querySelector('a')!.blur();
+  page.document.documentElement.classList.add('has-open-menu');
+  scroll(1000); assert.equal(header.classList.contains('is-hidden'), false);
+  page.document.documentElement.classList.remove('has-open-menu');
+  scroll(1200); assert.equal(header.classList.contains('is-hidden'), true);
+  scroll(0); assert.equal(header.classList.contains('is-hidden'), false);
   page.cleanup();
 });
 
-test('album settles once and reduced motion starts at the final care state', () => {
+
+
+test('album and care retain their entrances even with system reduction', () => {
   const full = createPage(`
     <section data-album><figure data-album-item style="--tilt: 3deg"></figure></section>
     <section data-care-section><svg><path data-care-path></path></svg></section>
@@ -336,8 +303,8 @@ test('album settles once and reduced motion starts at the final care state', () 
     <section data-album><figure data-album-item></figure></section>
     <section data-care-section><svg><path data-care-path></path></svg></section>
   `, { reduceMotion: true });
-  assert.equal(reduced.document.querySelector('[data-album]')!.classList.contains('is-settled'), true);
-  assert.equal(reduced.document.documentElement.style.getPropertyValue('--care-progress'), '1');
+  assert.equal(reduced.document.querySelector('[data-album]')!.classList.contains('is-settled'), false);
+  assert.notEqual(reduced.document.documentElement.style.getPropertyValue('--care-progress'), '1');
   reduced.cleanup();
 });
 
@@ -414,7 +381,7 @@ function createCinemaPage() {
   let left = 0;
   const requests: ScrollToOptions[] = [];
   const page = createPage(`
-    <button data-motion-toggle></button>
+
     <section data-cinema>
       <button data-cinema-prev>Anterior</button><button data-cinema-next>Próximo</button>
       <div data-cinema-track tabindex="0">
@@ -454,7 +421,7 @@ function createCinemaPage() {
   return { ...page, track, requests, pointer };
 }
 
-test('cinema dots and keyboard select an item smoothly and respect reduced motion', () => {
+test('cinema dots and keyboard keep smooth selection after system changes', () => {
   const page = createCinemaPage();
   page.document.querySelector<HTMLButtonElement>('[data-cinema-go="1"]')!.click();
   assert.equal(page.track.scrollLeft, 300);
@@ -462,10 +429,10 @@ test('cinema dots and keyboard select an item smoothly and respect reduced motio
   assert.equal(page.document.querySelector('[data-cinema-go="1"]')!.getAttribute('aria-current'), 'true');
   assert.equal(page.document.querySelector<HTMLElement>('[data-cinema]')!.style.getPropertyValue('--cinema-progress'), '0.5');
   assert.equal(page.document.querySelectorAll('[data-cinema-item].is-active').length, 1);
-  page.document.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click();
+  page.setReducedMotion(true);
   page.track.focus();
   page.track.dispatchEvent(new page.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
-  assert.equal(page.requests.at(-1)!.behavior, 'auto');
+  assert.equal(page.requests.at(-1)!.behavior, 'smooth');
   assert.equal(page.track.scrollLeft, 600);
   assert.equal(page.document.querySelector('[data-cinema-count]')!.textContent, '03 / 03');
   assert.equal(page.document.activeElement, page.track);

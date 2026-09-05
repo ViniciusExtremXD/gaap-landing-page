@@ -39,7 +39,7 @@ O GitHub Pages publica o conteúdo estático da raiz da branch `gh-pages`. A bra
 - `src/data/gaap.ts`: informações, links oficiais, fontes datadas, histórias, FAQ e manifesto de mídias.
 - `src/components/` e `src/pages/`: composição da experiência e página de privacidade.
 - `src/styles/global.css`: identidade, enquadramentos, responsividade e movimento.
-- `src/scripts/site.ts`: navegação, preferência de movimento, carrossel e carregamento das incorporações.
+- `src/scripts/site.ts`: navegação, carrossel e carregamento das incorporações.
 - `docs/content-contract.md`: regras de validação editorial e de arquivos.
 - `docs/media-derivatives.json`: dimensões, enquadramentos e procedência dos derivados.
 
@@ -47,11 +47,7 @@ A pesquisa selecionou conteúdo institucional e histórias acessíveis; não é 
 
 O movimento inclui abertura com máscara, entradas em sequência, profundidade sutil nas fotografias durante a rolagem, faixa editorial em movimento e percurso de cuidado desenhado em SVG. O cabeçalho destaca a logo oficial, os canais Instagram/Linktree e o progresso de leitura. A rolagem permanece nativa; efeitos de profundidade são atualizados sob demanda a cada quadro.
 
-O carrossel aceita arrasto no desktop, gestos nativos no celular, setas do teclado, botões e indicadores de posição. Avança a cada cinco segundos enquanto está visível, sem carregar ou reproduzir vídeos automaticamente. Pausa ao receber foco ou interação; o botão **Retomar carrossel** permite continuar. Também pausa com o mouse sobre a seção, quando sai da tela, quando a aba fica oculta ou no modo de movimentos reduzidos.
-
-Títulos, textos, fotos, botões e detalhes têm entradas individuais durante a rolagem. Ícones, selos e desenhos flutuam, giram ou pulsam enquanto estão visíveis. Há um controle fixo **Pausar animações / Ativar animações**, além do controle no rodapé.
-
-**[Demonstração com movimento completo](https://viniciusextremxd.github.io/gaap-landing-page/?motion=full):** esse link ativa e salva a preferência completa somente neste site, mesmo se o sistema ou uma escolha anterior solicitar movimento reduzido. O parâmetro é consumido e removido da URL para que uma pausa posterior continue valendo ao recarregar. Não altera configurações do computador. Sem essa escolha explícita, a preferência do sistema continua sendo respeitada.
+O site mantém o movimento completo ativo independentemente da preferência do sistema ou de escolhas salvas anteriormente. O menu se recolhe ao descer e reaparece ao subir, repetindo a entrada de links e ícones. Não há controle global de pausa.
 
 ## Fotografias, vídeos e direitos
 

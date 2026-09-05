@@ -6,7 +6,7 @@ export function initializeScrollMotion(doc: Document, win: Window, isReduced: ()
   const header = doc.querySelector<HTMLElement>('[data-header]');
   // Give every visual unit its own entrance; layout wrappers keep their geometry.
   const units = 'h1, h2, h3, p, a, button, summary, [data-media], .brand-emblem, .brand-identity, .status-pill, .source-date, .vertical-caption, .handwritten-note, .hero-footnote, .hero-seal, .hero-mini, .hero-scribble, .care-step-icon, .care-thread, .care-signoff, .film-number, .cover-kicker, .cover-headline, .cover-signature, .cover-drawing, .facade-title, .cinema-drag-hint, .cinema-progress, .outro-flower, .support-seal, .support-embrace, .external-note, .participation-index, .footer-wordmark > span, .footer-wordmark > svg';
-  for (const scope of doc.querySelectorAll('header, main, footer')) {
+  for (const scope of doc.querySelectorAll('main, footer')) {
     scope.querySelectorAll<HTMLElement>(units).forEach((element, index) => {
       if (element.closest('noscript, .ribbon-track, [data-embed-host]')) return;
       if (!element.hasAttribute('data-reveal')) {
@@ -17,7 +17,7 @@ export function initializeScrollMotion(doc: Document, win: Window, isReduced: ()
   }
   const livingKinds = {
     float: '.hero-mini, .hero-seal, .hero-scribble, .support-seal, .handwritten-note, .cover-drawing',
-    turn: '.tiny-spark, .outro-flower, .motion-icon, .footer-wordmark > svg, .care-signoff > svg, .hero-seal > svg, .support-seal > svg',
+    turn: '.tiny-spark, .outro-flower, .footer-wordmark > svg, .care-signoff > svg, .hero-seal > svg, .support-seal > svg',
     breathe: '.brand-emblem, .care-step-icon, .film-number, .status-pill',
     arrow: '.button .arrow-icon, .text-link .arrow-icon, .circle-button .arrow-icon, .header-social-link svg',
   };
@@ -46,6 +46,8 @@ export function initializeScrollMotion(doc: Document, win: Window, isReduced: ()
   let frame: number | undefined;
   let disposed = false;
   let wasReduced = isReduced();
+  let previousY = Math.max(0, win.scrollY);
+  let directionDistance = 0;
   const livingObserver = Observer ? new Observer(entries => {
     entries.forEach(({ target, isIntersecting }) => target.classList.toggle('is-in-view', isIntersecting));
   }, { rootMargin: '60px' }) : undefined;
@@ -67,6 +69,18 @@ export function initializeScrollMotion(doc: Document, win: Window, isReduced: ()
       const scrolled = win.scrollY > 32;
       header.classList.toggle('is-scrolled', scrolled);
       header.dataset.scrolled = String(scrolled);
+      const y = clamp(win.scrollY, 0, distance);
+      const delta = y - previousY;
+      directionDistance = Math.sign(delta) === Math.sign(directionDistance) ? directionDistance + delta : delta;
+      const keepVisible = y <= header.offsetHeight + 24 || root.classList.contains('has-open-menu') || (header.contains(doc.activeElement) && Boolean(doc.activeElement?.matches(':focus-visible')));
+      if (keepVisible) {
+        header.classList.remove('is-hidden');
+        directionDistance = 0;
+      } else if (Math.abs(directionDistance) >= 10) {
+        header.classList.toggle('is-hidden', directionDistance > 0);
+        directionDistance = 0;
+      }
+      previousY = y;
     }
 
     const readingLine = Math.max((header?.getBoundingClientRect().height || 0) + 24, viewport * 0.28);
@@ -134,6 +148,7 @@ export function initializeScrollMotion(doc: Document, win: Window, isReduced: ()
   };
 
   const revealFocused = (event: Event) => {
+    if (header?.contains(event.target as Node)) header.classList.remove('is-hidden');
     let element = (event.target as Element).closest<HTMLElement>('[data-reveal]');
     while (element) {
       element.classList.add('is-visible');
