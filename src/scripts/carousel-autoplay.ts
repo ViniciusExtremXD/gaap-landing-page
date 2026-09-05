@@ -3,13 +3,11 @@ export function initializeCarouselAutoplay(
   cinema: HTMLElement, doc: Document, win: Window,
   isReduced: () => boolean, advance: () => void,
 ) {
-  const toggle = cinema.querySelector<HTMLButtonElement>('[data-cinema-auto]');
   const track = cinema.querySelector<HTMLElement>('[data-cinema-track]');
   const count = cinema.querySelector<HTMLElement>('[data-cinema-count]');
-  if (!toggle || !track) return { refreshMotion() {}, cleanup() {} };
-  let paused = false;
-  let hovering = false;
-  let visible = false;
+  if (!track) return { refreshMotion() {}, cleanup() {} };
+  let dragging = false;
+  let visible = true;
   let timer: number | undefined;
   let disposed = false;
   const listeners: Array<() => void> = [];
@@ -17,46 +15,32 @@ export function initializeCarouselAutoplay(
     target.addEventListener(type, fn, type === 'wheel' ? { passive: true } : undefined);
     listeners.push(() => target.removeEventListener(type, fn));
   };
-  const canAdvance = () => !disposed && !paused && !hovering && visible && !isReduced()
-    && doc.visibilityState !== 'hidden' && !cinema.querySelector('.is-playing');
+  const canAdvance = () => !disposed && visible && !isReduced()
+    && doc.visibilityState !== 'hidden';
   const refreshMotion = () => {
     if (timer !== undefined) win.clearTimeout(timer);
     timer = undefined;
-    const stopped = paused || isReduced();
-    toggle.disabled = isReduced();
-    toggle.textContent = isReduced() ? 'Automático pausado' : paused ? 'Retomar carrossel' : 'Pausar carrossel';
-    toggle.setAttribute('aria-label', toggle.textContent);
     cinema.dataset.autoplay = canAdvance() ? 'playing' : 'paused';
-    count?.setAttribute('aria-live', stopped ? 'polite' : 'off');
+    count?.setAttribute('aria-live', 'off');
     if (canAdvance()) timer = win.setTimeout(() => {
       timer = undefined;
-      if (canAdvance()) advance();
+      if (canAdvance() && !dragging && !cinema.querySelector('.is-playing')) advance();
       refreshMotion();
     }, 5000);
   };
-  const pauseForInteraction = (event: Event) => {
-    if ((event.target as Element).closest('[data-cinema-auto]')) return;
-    paused = true;
-    refreshMotion();
-  };
-  on(toggle, 'click', () => { paused = !paused; refreshMotion(); });
-  on(cinema, 'pointerenter', (event) => {
-    if ((event as PointerEvent).pointerType === 'touch') return;
-    hovering = true; refreshMotion();
-  });
-  on(cinema, 'pointerleave', () => { hovering = false; refreshMotion(); });
-  on(cinema, 'pointerdown', pauseForInteraction);
-  on(cinema, 'focusin', pauseForInteraction);
-  on(cinema, 'wheel', event => {
-    const wheel = event as WheelEvent;
-    if (Math.abs(wheel.deltaX) > Math.abs(wheel.deltaY) || wheel.shiftKey) pauseForInteraction(event);
-  });
+  // Interaction restarts the interval; it never disables automatic rotation.
+  on(cinema, 'pointerdown', () => { dragging = true; refreshMotion(); });
+  on(win, 'pointerup', () => { if (dragging) { dragging = false; refreshMotion(); } });
+  on(win, 'pointercancel', () => { dragging = false; refreshMotion(); });
+  on(cinema, 'click', refreshMotion);
+  on(cinema, 'keydown', refreshMotion);
   on(doc, 'visibilitychange', refreshMotion);
   const Observer = (win as Window & { IntersectionObserver?: typeof IntersectionObserver }).IntersectionObserver;
   const observer = Observer ? new Observer((entries) => {
     visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .25);
     refreshMotion();
   }, { threshold: [0, .25] }) : undefined;
+  visible = !observer;
   observer?.observe(track);
   refreshMotion();
   return { refreshMotion, cleanup() {

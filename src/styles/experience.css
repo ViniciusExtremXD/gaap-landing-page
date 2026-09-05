@@ -153,11 +153,6 @@ html { scroll-padding-top: 132px; }
 :root.motion-ready[data-motion=full] [data-reveal=photo] { transition: opacity 950ms var(--ease-out), translate 1100ms var(--ease-out), clip-path 1200ms var(--ease-out); transition-delay: var(--reveal-delay, 0ms); }
 :root.motion-ready[data-motion=full] [data-reveal=photo]:not(.is-visible):not(:focus-within) { clip-path: inset(14% 0 0); }
 :root.motion-ready[data-motion=full] [data-reveal=photo].is-visible { clip-path: inset(-10%); }
-.cinema-auto { flex-shrink: 0; border: 1px solid #72509444; border-radius: 99px; min-height: 44px; background: transparent; padding: 8px 15px; color: var(--purple-dark); font-size: 10px; }
-.cinema-auto:hover { background: #e5d9ef; }
-.cinema-auto:disabled { opacity: .65; cursor: default; }
-:root:not([data-motion]) .cinema-auto { display: none; }
 @media (max-width: 700px) {
   .cinema-bottom { gap: 5px 12px; }
-  .cinema-auto { order: 4; margin-top: 12px; }
 }
